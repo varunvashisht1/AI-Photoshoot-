@@ -1,0 +1,5 @@
+{
+  "name": "AI Product Photoshoot",
+  "description": "An AI-powered tool that allows users to upload a product image and generate professional-looking photoshoot scenes by providing a text prompt. Utilizes Gemini's image editing capabilities to create stunning product visuals.",
+  "requestFramePermissions": []
+}
