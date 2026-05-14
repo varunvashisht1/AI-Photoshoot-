@@ -74,11 +74,18 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   );
 
   return (
-    <div className="bg-gray-800/50 rounded-lg p-5 shadow-2xl">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-gray-300">Product Image</h2>
+    <div className="surface-elevated p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-slate-100">
+            Reference photo <span className="font-normal text-slate-500">(optional)</span>
+          </h2>
+          <p className="text-[11px] text-slate-500">
+            For the before/after slider — describe the product in the prompt.
+          </p>
+        </div>
         {imagePreviewUrl && imageMeta && (
-          <span className="text-xs text-gray-500">
+          <span className="rounded-md border border-white/10 bg-white/5 px-2 py-1 font-mono text-[10px] text-slate-400">
             {imageMeta.width}×{imageMeta.height} · {imageMeta.sizeKb}KB
           </span>
         )}
@@ -89,10 +96,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className={`relative border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-colors duration-300 ${
+        className={`relative cursor-pointer overflow-hidden rounded-xl border-2 border-dashed p-3 text-center transition-colors duration-200 ${
           isDragging
-            ? "bg-gray-700 border-cyan-400"
-            : "border-gray-600 hover:border-gray-500 hover:bg-gray-800"
+            ? "border-cyan-400 bg-cyan-500/5"
+            : "border-white/10 hover:border-white/25 hover:bg-white/[0.03]"
         }`}
       >
         <input
@@ -103,39 +110,38 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           accept="image/png, image/jpeg, image/webp"
         />
         {imagePreviewUrl ? (
-          <div className="relative w-full h-56">
+          <div className="relative h-56 w-full">
             <img
               src={imagePreviewUrl}
               alt="Product preview"
-              className="rounded-md object-contain w-full h-full"
+              className="h-full w-full rounded-lg object-contain"
             />
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onClear();
               }}
-              className="absolute top-1.5 right-1.5 bg-black/70 hover:bg-red-600 text-white rounded-full p-1 transition-colors"
+              className="absolute right-1.5 top-1.5 rounded-full bg-slate-950/80 p-1.5 text-white transition-colors hover:bg-rose-600"
               aria-label="Remove image"
             >
-              <CloseIcon className="w-4 h-4" />
+              <CloseIcon className="h-3.5 w-3.5" />
             </button>
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-md">
-              <span className="text-white font-semibold text-sm">Click or drag to replace</span>
+            <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-slate-950/60 opacity-0 transition-opacity duration-200 hover:opacity-100">
+              <span className="text-sm font-semibold text-white">Click or drag to replace</span>
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-56 text-gray-500">
-            <UploadIcon className="w-12 h-12 mb-2" />
-            <p className="font-semibold text-gray-300">Click or drop an image</p>
-            <p className="text-xs mt-1">PNG, JPG or WebP · up to 15MB</p>
-            <p className="text-xs mt-1 text-gray-600">
-              Best results: clean background, product centered
-            </p>
+          <div className="flex h-52 flex-col items-center justify-center gap-2 text-slate-500">
+            <div className="grid h-12 w-12 place-items-center rounded-full border border-white/10 bg-white/5">
+              <UploadIcon className="h-6 w-6 text-slate-300" />
+            </div>
+            <p className="text-sm font-semibold text-slate-200">Drop a product photo here</p>
+            <p className="text-[11px]">PNG, JPG, WebP · up to 15MB</p>
           </div>
         )}
       </div>
       {localError && (
-        <p className="mt-2 text-xs text-red-400">{localError}</p>
+        <p className="mt-2 text-xs text-rose-300">{localError}</p>
       )}
     </div>
   );

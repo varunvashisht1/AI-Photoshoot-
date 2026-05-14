@@ -19,32 +19,51 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   disabledReason,
 }) => {
   const cannotSubmit = isLoading || !prompt.trim() || disabled;
+  const charCount = prompt.length;
+  const isMac =
+    typeof navigator !== "undefined" && /Mac|iPhone|iPod|iPad/i.test(navigator.userAgent);
 
   return (
-    <div className="bg-gray-800/50 rounded-lg p-5 shadow-2xl flex flex-col">
-      <h2 className="text-lg font-semibold text-gray-300 mb-3">Scene Description</h2>
-      <textarea
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        placeholder="e.g. on a polished marble counter with soft morning sunlight from the left and a sprig of fresh basil"
-        className="w-full bg-gray-900 border border-gray-700 rounded-md p-3 text-gray-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition duration-200 min-h-[110px] text-sm resize-y"
-        rows={4}
-        disabled={isLoading}
-      />
-      <p className="text-xs text-gray-500 mt-1.5">
-        Tip: pick a preset above for a starting point, then add a sentence to personalize.
-      </p>
+    <div className="surface-elevated p-5">
+      <div className="mb-2 flex items-baseline justify-between">
+        <h2 className="text-base font-semibold text-slate-100">Describe your scene</h2>
+        <span className="text-[11px] text-slate-500 tabular-nums">{charCount} chars</span>
+      </div>
+      <div className="relative">
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && !cannotSubmit) {
+              e.preventDefault();
+              onSubmit();
+            }
+          }}
+          placeholder="A sleek black ceramic vase on a polished marble counter, soft morning light from the left, sprig of fresh basil…"
+          className="block w-full resize-y rounded-lg border border-white/10 bg-slate-950/60 p-3 text-sm leading-relaxed text-slate-100 placeholder:text-slate-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/40 outline-none min-h-[120px]"
+          rows={4}
+          disabled={isLoading}
+        />
+      </div>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[11px] text-slate-500">
+          Tip: pick a preset above, then add the product details.
+        </p>
+        <kbd className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-slate-400 sm:inline">
+          {isMac ? "⌘" : "Ctrl"} + ↵
+        </kbd>
+      </div>
       <button
         onClick={onSubmit}
         disabled={cannotSubmit}
         title={disabled && disabledReason ? disabledReason : undefined}
-        className="mt-4 w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-700 disabled:cursor-not-allowed disabled:text-gray-400 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-cyan-500/30"
+        className="btn-primary mt-4 w-full py-3 text-base"
       >
-        <SparklesIcon className="w-5 h-5" />
+        <SparklesIcon className={`h-5 w-5 ${isLoading ? "animate-pulse-soft" : ""}`} />
         {isLoading ? "Generating…" : "Generate"}
       </button>
       {disabled && disabledReason && !isLoading && (
-        <p className="text-xs text-amber-400 mt-2 text-center">{disabledReason}</p>
+        <p className="mt-2 text-center text-xs text-amber-300/90">{disabledReason}</p>
       )}
     </div>
   );

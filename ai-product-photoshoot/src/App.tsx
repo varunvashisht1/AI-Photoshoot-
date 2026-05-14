@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "./components/Header";
+import { Hero } from "./components/Hero";
+import { FAQ } from "./components/FAQ";
 import { ImageUploader } from "./components/ImageUploader";
 import { PromptInput } from "./components/PromptInput";
 import { ResultGallery } from "./components/ResultGallery";
@@ -9,6 +11,7 @@ import { AdvancedSettings, type AdvancedSettingsValue } from "./components/Advan
 import { History } from "./components/History";
 import { SettingsModal } from "./components/SettingsModal";
 import { ModelPicker } from "./components/ModelPicker";
+import { ToastProvider, useKeyboardShortcut, useToast } from "./components/Toast";
 import {
   blobToDataUrl,
   dataUrlFromBase64,
@@ -55,8 +58,9 @@ const DEFAULT_SETTINGS: AdvancedSettingsValue = {
   negativePrompt: "text, watermark, logo overlay, blurry, low quality, distorted",
 };
 
-const App: React.FC = () => {
-  // Provider keys + selection
+const AppShell: React.FC = () => {
+  const toast = useToast();
+
   const [providerKeys, setProviderKeys] = useState<Record<string, string>>(() =>
     loadProviderKeys(),
   );
@@ -70,22 +74,18 @@ const App: React.FC = () => {
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Photo / prompt state
   const [uploaded, setUploaded] = useState<UploadedImage | null>(null);
   const [prompt, setPrompt] = useState<string>("");
   const [activePresetId, setActivePresetId] = useState<string | undefined>();
   const [settings, setSettings] = useState<AdvancedSettingsValue>(DEFAULT_SETTINGS);
 
-  // Output state
   const [generatedUrls, setGeneratedUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [history, setHistory] = useState<HistoryItem[]>(() => loadHistory());
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // Persist selection
   useEffect(() => {
     saveSelection(selection);
   }, [selection]);
@@ -100,42 +100,52 @@ const App: React.FC = () => {
     setSelection({ providerId, modelId });
   }, []);
 
-  const handleSaveKey = useCallback((providerId: string, key: string) => {
-    saveProviderKey(providerId, key);
-    setProviderKeys((k) => {
-      const next = { ...k };
-      if (key) next[providerId] = key;
-      else delete next[providerId];
-      return next;
-    });
-  }, []);
-
-  const handleImageUpload = useCallback(async (file: File) => {
-    try {
-      setError(null);
-      const { blob, width, height, mimeType } = await downscaleImage(file);
-      const base64 = await fileToBase64(blob);
-      const dataUrl = await blobToDataUrl(blob);
-      setUploaded({
-        blob,
-        base64,
-        mimeType,
-        dataUrl,
-        width,
-        height,
-        sizeKb: Math.round(blob.size / 1024),
+  const handleSaveKey = useCallback(
+    (providerId: string, key: string) => {
+      saveProviderKey(providerId, key);
+      setProviderKeys((k) => {
+        const next = { ...k };
+        if (key) next[providerId] = key;
+        else delete next[providerId];
+        return next;
       });
-      setGeneratedUrls([]);
-    } catch (e) {
-      console.error(e);
-      setError("Failed to process the image. Try a different file.");
-    }
-  }, []);
+      if (key) {
+        toast.show(`${PROVIDERS_BY_ID[providerId]?.name} token saved`, { kind: "success" });
+      }
+    },
+    [toast],
+  );
+
+  const handleImageUpload = useCallback(
+    async (file: File) => {
+      try {
+        const { blob, width, height, mimeType } = await downscaleImage(file);
+        const base64 = await fileToBase64(blob);
+        const dataUrl = await blobToDataUrl(blob);
+        setUploaded({
+          blob,
+          base64,
+          mimeType,
+          dataUrl,
+          width,
+          height,
+          sizeKb: Math.round(blob.size / 1024),
+        });
+        setGeneratedUrls([]);
+      } catch (e) {
+        console.error(e);
+        toast.show("Couldn't process that image", {
+          description: "Try a different file (PNG, JPG, WebP).",
+          kind: "error",
+        });
+      }
+    },
+    [toast],
+  );
 
   const handleClearImage = useCallback(() => {
     setUploaded(null);
     setGeneratedUrls([]);
-    setError(null);
   }, []);
 
   const handlePickPreset = useCallback((preset: ScenePreset) => {
@@ -155,16 +165,22 @@ const App: React.FC = () => {
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) {
-      setError("Write a scene description or pick a preset.");
+      toast.show("Add a scene description first", {
+        description: "Pick a preset or write your own prompt.",
+        kind: "warning",
+      });
       return;
     }
     if (currentProvider.requiresKey && !currentKey) {
       setSettingsOpen(true);
+      toast.show(`${currentProvider.name} needs a free token`, {
+        description: "Add it in Settings to use this provider.",
+        kind: "warning",
+      });
       return;
     }
 
     setIsLoading(true);
-    setError(null);
     setGeneratedUrls([]);
 
     abortRef.current?.abort();
@@ -189,6 +205,10 @@ const App: React.FC = () => {
       const results = await Promise.all(tasks);
       const urls = results.map((r) => dataUrlFromBase64(r.base64, r.mimeType));
       setGeneratedUrls(urls);
+      toast.show(`Generated ${urls.length} image${urls.length > 1 ? "s" : ""}`, {
+        kind: "success",
+        duration: 3000,
+      });
 
       try {
         const firstUrl = urls[0];
@@ -215,7 +235,7 @@ const App: React.FC = () => {
     } catch (err) {
       console.error(err);
       const msg = err instanceof Error ? err.message : "Generation failed.";
-      setError(msg);
+      toast.show("Generation failed", { description: msg, kind: "error", duration: 7000 });
     } finally {
       setIsLoading(false);
     }
@@ -223,14 +243,28 @@ const App: React.FC = () => {
     currentKey,
     currentModel.id,
     currentProvider.id,
+    currentProvider.name,
     currentProvider.requiresKey,
     fullPromptPreview,
     prompt,
     settings.aspectRatio,
     settings.negativePrompt,
     settings.variations,
+    toast,
     uploaded,
   ]);
+
+  // Cmd/Ctrl + Enter -> generate from anywhere
+  useKeyboardShortcut(
+    useCallback((e: KeyboardEvent) => e.key === "Enter" && (e.metaKey || e.ctrlKey), []),
+    useCallback(
+      (e: KeyboardEvent) => {
+        e.preventDefault();
+        if (!isLoading) handleGenerate();
+      },
+      [handleGenerate, isLoading],
+    ),
+  );
 
   const handleSelectFromHistory = useCallback((item: HistoryItem) => {
     setPrompt(item.prompt);
@@ -248,7 +282,7 @@ const App: React.FC = () => {
       setSelection({ providerId: item.providerId, modelId: item.modelId });
     }
     setGeneratedUrls([item.fullImage]);
-    setError(null);
+    document.getElementById("app")?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   const handleDeleteHistory = useCallback((id: string) => {
@@ -269,17 +303,20 @@ const App: React.FC = () => {
       : undefined;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-gray-200 font-sans">
+    <div className="min-h-screen text-slate-200">
       <Header
         onOpenSettings={() => setSettingsOpen(true)}
         providerName={currentProvider.name}
         modelName={currentModel.name}
       />
 
-      <main className="container mx-auto px-4 py-6 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column: inputs */}
-          <div className="lg:col-span-2 flex flex-col gap-5">
+      <a id="top" aria-hidden />
+      <Hero />
+
+      <main id="app" className="container mx-auto px-4 py-8 sm:py-12">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Left column */}
+          <div className="flex flex-col gap-5 lg:col-span-2">
             <ModelPicker
               providers={PROVIDERS}
               selectedProviderId={selection.providerId}
@@ -295,7 +332,11 @@ const App: React.FC = () => {
               imagePreviewUrl={uploaded?.dataUrl ?? null}
               imageMeta={
                 uploaded
-                  ? { width: uploaded.width, height: uploaded.height, sizeKb: uploaded.sizeKb }
+                  ? {
+                      width: uploaded.width,
+                      height: uploaded.height,
+                      sizeKb: uploaded.sizeKb,
+                    }
                   : null
               }
             />
@@ -315,25 +356,13 @@ const App: React.FC = () => {
             />
           </div>
 
-          {/* Right column: settings + output */}
+          {/* Right column */}
           <div className="flex flex-col gap-5">
             <AdvancedSettings value={settings} onChange={setSettings} disabled={isLoading} />
 
-            <div className="bg-gray-800/50 rounded-lg p-5 shadow-2xl min-h-[300px] flex flex-col items-center justify-center">
+            <div className="surface-elevated min-h-[320px] p-5 flex flex-col items-center justify-center">
               {isLoading ? (
                 <Loader />
-              ) : error ? (
-                <div className="text-center text-red-300 max-w-sm">
-                  <p className="font-semibold mb-1">Something went wrong</p>
-                  <p className="text-sm">{error}</p>
-                  <button
-                    onClick={handleGenerate}
-                    disabled={disabled}
-                    className="mt-4 text-sm bg-gray-700 hover:bg-gray-600 disabled:opacity-50 px-3 py-1.5 rounded-md text-gray-200"
-                  >
-                    Try again
-                  </button>
-                </div>
               ) : (
                 <ResultGallery
                   originalUrl={uploaded?.dataUrl ?? null}
@@ -354,11 +383,25 @@ const App: React.FC = () => {
             onClear={handleClearHistory}
           />
         </div>
-
-        <footer className="mt-10 text-center text-xs text-gray-500 pb-6">
-          Built on free open-source models · Your tokens and history stay in this browser.
-        </footer>
       </main>
+
+      <FAQ />
+
+      <footer className="border-t border-white/5 bg-slate-950/50">
+        <div className="container mx-auto px-4 py-8 text-center text-xs text-slate-500">
+          <p>
+            Built on free open-source models · Your data stays in your browser ·{" "}
+            <a
+              href="https://github.com/varunvashisht1/AI-Photoshoot-"
+              target="_blank"
+              rel="noreferrer"
+              className="text-brand-300 hover:text-brand-200"
+            >
+              Source on GitHub
+            </a>
+          </p>
+        </div>
+      </footer>
 
       <SettingsModal
         open={settingsOpen}
@@ -370,5 +413,11 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+const App: React.FC = () => (
+  <ToastProvider>
+    <AppShell />
+  </ToastProvider>
+);
 
 export default App;
