@@ -7,7 +7,8 @@ import { Loader } from "./components/Loader";
 import { ScenePresets } from "./components/ScenePresets";
 import { AdvancedSettings, type AdvancedSettingsValue } from "./components/AdvancedSettings";
 import { History } from "./components/History";
-import { ApiKeyModal } from "./components/ApiKeyModal";
+import { SettingsModal } from "./components/SettingsModal";
+import { ModelPicker } from "./components/ModelPicker";
 import {
   blobToDataUrl,
   dataUrlFromBase64,
@@ -18,14 +19,22 @@ import {
 import {
   addToHistory,
   clearHistory,
-  loadApiKey,
   loadHistory,
+  loadProviderKeys,
+  loadSelection,
   removeFromHistory,
-  saveApiKey,
+  saveProviderKey,
+  saveSelection,
   type HistoryItem,
 } from "./utils/storage";
 import { composePrompt } from "./utils/promptBuilder";
-import { generateProductScene } from "./services/geminiService";
+import {
+  DEFAULT_MODEL_ID,
+  DEFAULT_PROVIDER_ID,
+  PROVIDERS,
+  PROVIDERS_BY_ID,
+  generateImage,
+} from "./providers";
 import type { ScenePreset } from "./data/presets";
 
 interface UploadedImage {
@@ -43,19 +52,31 @@ const DEFAULT_SETTINGS: AdvancedSettingsValue = {
   variations: 1,
   lighting: "",
   mood: "",
-  negativePrompt: "text, watermark, logo overlay, blurry, low quality, distorted product",
+  negativePrompt: "text, watermark, logo overlay, blurry, low quality, distorted",
 };
 
 const App: React.FC = () => {
-  const [apiKey, setApiKey] = useState<string>(() => loadApiKey());
-  const [apiKeyModalOpen, setApiKeyModalOpen] = useState<boolean>(false);
+  // Provider keys + selection
+  const [providerKeys, setProviderKeys] = useState<Record<string, string>>(() =>
+    loadProviderKeys(),
+  );
+  const [selection, setSelection] = useState(() => {
+    const stored = loadSelection();
+    if (stored && PROVIDERS_BY_ID[stored.providerId]) {
+      const prov = PROVIDERS_BY_ID[stored.providerId];
+      if (prov.models.some((m) => m.id === stored.modelId)) return stored;
+    }
+    return { providerId: DEFAULT_PROVIDER_ID, modelId: DEFAULT_MODEL_ID };
+  });
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // Photo / prompt state
   const [uploaded, setUploaded] = useState<UploadedImage | null>(null);
   const [prompt, setPrompt] = useState<string>("");
   const [activePresetId, setActivePresetId] = useState<string | undefined>();
-
   const [settings, setSettings] = useState<AdvancedSettingsValue>(DEFAULT_SETTINGS);
 
+  // Output state
   const [generatedUrls, setGeneratedUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,10 +85,30 @@ const App: React.FC = () => {
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // Prompt user for API key on first visit
+  // Persist selection
   useEffect(() => {
-    if (!apiKey) setApiKeyModalOpen(true);
-  }, [apiKey]);
+    saveSelection(selection);
+  }, [selection]);
+
+  const currentProvider = PROVIDERS_BY_ID[selection.providerId];
+  const currentModel =
+    currentProvider.models.find((m) => m.id === selection.modelId) ??
+    currentProvider.models[0];
+  const currentKey = providerKeys[currentProvider.id] ?? "";
+
+  const handleSelectionChange = useCallback((providerId: string, modelId: string) => {
+    setSelection({ providerId, modelId });
+  }, []);
+
+  const handleSaveKey = useCallback((providerId: string, key: string) => {
+    saveProviderKey(providerId, key);
+    setProviderKeys((k) => {
+      const next = { ...k };
+      if (key) next[providerId] = key;
+      else delete next[providerId];
+      return next;
+    });
+  }, []);
 
   const handleImageUpload = useCallback(async (file: File) => {
     try {
@@ -97,17 +138,9 @@ const App: React.FC = () => {
     setError(null);
   }, []);
 
-  const handlePickPreset = useCallback(
-    (preset: ScenePreset) => {
-      setActivePresetId(preset.id);
-      setPrompt(preset.prompt);
-    },
-    [],
-  );
-
-  const handleSaveApiKey = useCallback((key: string) => {
-    setApiKey(key);
-    saveApiKey(key);
+  const handlePickPreset = useCallback((preset: ScenePreset) => {
+    setActivePresetId(preset.id);
+    setPrompt(preset.prompt);
   }, []);
 
   const fullPromptPreview = useMemo(
@@ -121,16 +154,12 @@ const App: React.FC = () => {
   );
 
   const handleGenerate = useCallback(async () => {
-    if (!uploaded) {
-      setError("Upload a product image first.");
-      return;
-    }
     if (!prompt.trim()) {
-      setError("Write a scene description (or pick a preset).");
+      setError("Write a scene description or pick a preset.");
       return;
     }
-    if (!apiKey) {
-      setApiKeyModalOpen(true);
+    if (currentProvider.requiresKey && !currentKey) {
+      setSettingsOpen(true);
       return;
     }
 
@@ -142,36 +171,44 @@ const App: React.FC = () => {
     abortRef.current = new AbortController();
 
     try {
-      const results = await generateProductScene({
-        apiKey,
-        base64ImageData: uploaded.base64,
-        mimeType: uploaded.mimeType,
-        prompt: fullPromptPreview,
-        negativePrompt: settings.negativePrompt,
-        aspectRatio: settings.aspectRatio,
-        variations: settings.variations,
-        signal: abortRef.current.signal,
-      });
+      const count = Math.max(1, Math.min(4, settings.variations));
+      const baseSeed = Math.floor(Math.random() * 1_000_000);
+      const tasks = Array.from({ length: count }, (_, i) =>
+        generateImage({
+          providerId: currentProvider.id,
+          modelId: currentModel.id,
+          apiKey: currentKey,
+          prompt: fullPromptPreview,
+          negativePrompt: settings.negativePrompt,
+          aspectRatio: settings.aspectRatio,
+          seed: baseSeed + i * 1009,
+          signal: abortRef.current.signal,
+        }),
+      );
 
+      const results = await Promise.all(tasks);
       const urls = results.map((r) => dataUrlFromBase64(r.base64, r.mimeType));
       setGeneratedUrls(urls);
 
       try {
         const firstUrl = urls[0];
         const thumbnail = await makeThumbnail(firstUrl, 220);
-        const originalThumbnail = await makeThumbnail(uploaded.dataUrl, 220);
+        const originalThumbnail = uploaded
+          ? await makeThumbnail(uploaded.dataUrl, 220)
+          : undefined;
         const item: HistoryItem = {
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           createdAt: Date.now(),
           prompt: fullPromptPreview,
           negativePrompt: settings.negativePrompt,
           aspectRatio: settings.aspectRatio,
+          providerId: currentProvider.id,
+          modelId: currentModel.id,
           thumbnail,
           fullImage: firstUrl,
           originalThumbnail,
         };
-        const next = addToHistory(item);
-        setHistory(next);
+        setHistory(addToHistory(item));
       } catch (histErr) {
         console.warn("History save failed", histErr);
       }
@@ -183,7 +220,10 @@ const App: React.FC = () => {
       setIsLoading(false);
     }
   }, [
-    apiKey,
+    currentKey,
+    currentModel.id,
+    currentProvider.id,
+    currentProvider.requiresKey,
     fullPromptPreview,
     prompt,
     settings.aspectRatio,
@@ -195,7 +235,17 @@ const App: React.FC = () => {
   const handleSelectFromHistory = useCallback((item: HistoryItem) => {
     setPrompt(item.prompt);
     if (item.aspectRatio) {
-      setSettings((s) => ({ ...s, aspectRatio: item.aspectRatio as AdvancedSettingsValue["aspectRatio"] }));
+      setSettings((s) => ({
+        ...s,
+        aspectRatio: item.aspectRatio as AdvancedSettingsValue["aspectRatio"],
+      }));
+    }
+    if (
+      item.providerId &&
+      item.modelId &&
+      PROVIDERS_BY_ID[item.providerId]?.models.some((m) => m.id === item.modelId)
+    ) {
+      setSelection({ providerId: item.providerId, modelId: item.modelId });
     }
     setGeneratedUrls([item.fullImage]);
     setError(null);
@@ -210,21 +260,35 @@ const App: React.FC = () => {
     setHistory([]);
   }, []);
 
-  const disabled = !uploaded || !apiKey;
-  const disabledReason = !apiKey
-    ? "Add your Gemini API key to start (top right)."
-    : !uploaded
-      ? "Upload a product image first."
+  const keyMissing = currentProvider.requiresKey && !currentKey;
+  const disabled = keyMissing || !prompt.trim();
+  const disabledReason = keyMissing
+    ? `${currentProvider.name} needs a free token — open Settings.`
+    : !prompt.trim()
+      ? "Write a scene description or pick a preset."
       : undefined;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 text-gray-200 font-sans">
-      <Header onOpenSettings={() => setApiKeyModalOpen(true)} hasApiKey={!!apiKey} />
+      <Header
+        onOpenSettings={() => setSettingsOpen(true)}
+        providerName={currentProvider.name}
+        modelName={currentModel.name}
+      />
 
       <main className="container mx-auto px-4 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: inputs */}
+          {/* Left column: inputs */}
           <div className="lg:col-span-2 flex flex-col gap-5">
+            <ModelPicker
+              providers={PROVIDERS}
+              selectedProviderId={selection.providerId}
+              selectedModelId={selection.modelId}
+              providerKeys={providerKeys}
+              onChange={handleSelectionChange}
+              onOpenSettings={() => setSettingsOpen(true)}
+            />
+
             <ImageUploader
               onImageUpload={handleImageUpload}
               onClear={handleClearImage}
@@ -251,7 +315,7 @@ const App: React.FC = () => {
             />
           </div>
 
-          {/* Right: settings + output */}
+          {/* Right column: settings + output */}
           <div className="flex flex-col gap-5">
             <AdvancedSettings value={settings} onChange={setSettings} disabled={isLoading} />
 
@@ -292,15 +356,16 @@ const App: React.FC = () => {
         </div>
 
         <footer className="mt-10 text-center text-xs text-gray-500 pb-6">
-          Built with Gemini · Your API key and history stay in this browser.
+          Built on free open-source models · Your tokens and history stay in this browser.
         </footer>
       </main>
 
-      <ApiKeyModal
-        open={apiKeyModalOpen}
-        initialKey={apiKey}
-        onClose={() => setApiKeyModalOpen(false)}
-        onSave={handleSaveApiKey}
+      <SettingsModal
+        open={settingsOpen}
+        providers={PROVIDERS}
+        initialKeys={providerKeys}
+        onClose={() => setSettingsOpen(false)}
+        onSave={handleSaveKey}
       />
     </div>
   );

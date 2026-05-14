@@ -1,5 +1,5 @@
 import React from "react";
-import type { AspectRatio } from "../services/geminiService";
+import type { AspectRatio } from "../providers/types";
 import { LIGHTING_OPTIONS, MOOD_OPTIONS } from "../utils/promptBuilder";
 
 export interface AdvancedSettingsValue {

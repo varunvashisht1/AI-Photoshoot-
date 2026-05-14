@@ -23,11 +23,22 @@ export const MOOD_OPTIONS = [
   "fresh & natural",
 ] as const;
 
+/**
+ * Build a text-to-image prompt. Open-source models want descriptive scene text,
+ * not the instruction-style preservation prose Gemini wanted.
+ */
 export const composePrompt = (parts: PromptParts): string => {
-  const segments: string[] = [];
-  if (parts.scene.trim()) segments.push(parts.scene.trim());
-  if (parts.lighting) segments.push(`Lighting: ${parts.lighting}.`);
-  if (parts.mood) segments.push(`Mood: ${parts.mood}.`);
-  if (parts.extras && parts.extras.trim()) segments.push(parts.extras.trim());
-  return segments.join(" ");
+  const tail: string[] = [];
+  if (parts.lighting) tail.push(parts.lighting);
+  if (parts.mood) tail.push(parts.mood);
+  tail.push(
+    "professional product photography",
+    "high detail",
+    "studio quality",
+    "8k",
+  );
+  const head = parts.extras?.trim()
+    ? `${parts.scene.trim()}. ${parts.extras.trim()}`
+    : parts.scene.trim();
+  return [head, tail.join(", ")].filter(Boolean).join(", ");
 };
