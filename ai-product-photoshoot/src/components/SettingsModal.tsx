@@ -16,28 +16,38 @@ const KeyRow: React.FC<{
   onChange: (v: string) => void;
 }> = ({ provider, value, onChange }) => {
   const [reveal, setReveal] = useState(false);
+  const acceptsKey = provider.requiresKey || !!provider.keyDocsUrl;
+  const placeholder =
+    provider.id === "huggingface"
+      ? "hf_..."
+      : provider.id === "pollinations"
+        ? "Optional — unlocks FLUX models"
+        : "Paste your token";
+  const badgeLabel = provider.requiresKey
+    ? "Token required"
+    : acceptsKey
+      ? "Token optional"
+      : "No key needed";
+  const badgeTone = provider.requiresKey
+    ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300";
+
   return (
     <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
       <div className="mb-2 flex items-baseline justify-between gap-3">
         <label className="text-sm font-semibold text-slate-100">{provider.name}</label>
-        <span
-          className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${
-            provider.requiresKey
-              ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
-              : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-          }`}
-        >
-          {provider.requiresKey ? "Token required" : "No key needed"}
+        <span className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold ${badgeTone}`}>
+          {badgeLabel}
         </span>
       </div>
-      {provider.requiresKey ? (
+      {acceptsKey ? (
         <>
           <div className="relative">
             <input
               type={reveal ? "text" : "password"}
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              placeholder={provider.id === "huggingface" ? "hf_..." : "Paste your token"}
+              placeholder={placeholder}
               className="w-full rounded-lg border border-white/10 bg-slate-950/60 py-2 pl-3 pr-10 text-sm text-slate-100 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/40 outline-none"
               spellCheck={false}
               autoComplete="off"
@@ -53,7 +63,7 @@ const KeyRow: React.FC<{
           </div>
           {provider.keyDocsUrl && (
             <p className="mt-1.5 text-[11px] text-slate-500">
-              Free token at{" "}
+              {provider.requiresKey ? "Free token at " : "Optional free token at "}
               <a
                 href={provider.keyDocsUrl}
                 target="_blank"
@@ -63,6 +73,9 @@ const KeyRow: React.FC<{
                 {provider.keyDocsLabel ?? provider.keyDocsUrl}
               </a>
             </p>
+          )}
+          {!provider.requiresKey && (
+            <p className="mt-0.5 text-[11px] text-slate-500">{provider.description}</p>
           )}
         </>
       ) : (

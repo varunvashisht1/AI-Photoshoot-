@@ -6,44 +6,47 @@ import {
   type Provider,
 } from "./types";
 
+// Pollinations introduced tiered access in 2025. FLUX-family models now
+// require a free token from auth.pollinations.ai; anonymous calls return
+// HTTP 402. "turbo" (SDXL Turbo) still works without a token.
 const MODELS = [
+  {
+    id: "turbo",
+    name: "SDXL Turbo",
+    description: "Fast Stable Diffusion XL Turbo — works without a token",
+    badges: ["Free", "Fast", "No token"],
+  },
   {
     id: "flux",
     name: "FLUX.1",
     description: "Open-source FLUX — best general quality",
-    badges: ["Free", "Photoreal"],
+    badges: ["Photoreal", "Token"],
   },
   {
     id: "flux-realism",
     name: "FLUX Realism",
     description: "FLUX tuned for photorealistic results",
-    badges: ["Free", "Photoreal"],
+    badges: ["Photoreal", "Token"],
   },
   {
     id: "flux-3d",
     name: "FLUX 3D",
     description: "3D-rendered aesthetic",
-    badges: ["Free"],
+    badges: ["Token"],
   },
   {
     id: "flux-anime",
     name: "FLUX Anime",
     description: "Anime / illustration style",
-    badges: ["Free", "Stylized"],
-  },
-  {
-    id: "turbo",
-    name: "SDXL Turbo",
-    description: "Fast Stable Diffusion XL Turbo",
-    badges: ["Free", "Fast"],
+    badges: ["Stylized", "Token"],
   },
 ];
 
 const generate = async (opts: GenerateOpts): Promise<GenerateResult> => {
-  const { prompt, modelId, aspectRatio, seed, signal } = opts;
+  const { prompt, modelId, apiKey, aspectRatio, seed, signal } = opts;
   const { width, height } = dimsForAspect(aspectRatio);
   const params = new URLSearchParams({
-    model: modelId || "flux",
+    model: modelId || "turbo",
     width: String(width),
     height: String(height),
     seed: String(seed ?? Math.floor(Math.random() * 1_000_000)),
@@ -51,6 +54,7 @@ const generate = async (opts: GenerateOpts): Promise<GenerateResult> => {
     enhance: "true",
     private: "true",
   });
+  if (apiKey) params.set("token", apiKey);
   const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(
     prompt,
   )}?${params.toString()}`;
@@ -64,6 +68,18 @@ const generate = async (opts: GenerateOpts): Promise<GenerateResult> => {
   }
 
   if (!res.ok) {
+    if (res.status === 402) {
+      throw new Error(
+        apiKey
+          ? "Your Pollinations token doesn't have access to this model. Try 'SDXL Turbo' or check your tier at auth.pollinations.ai."
+          : "This Pollinations model needs a free token. Open Settings, add a token from auth.pollinations.ai — or switch to 'SDXL Turbo' which works anonymously.",
+      );
+    }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(
+        "Your Pollinations token was rejected. Update it in Settings or remove it to use anonymous models.",
+      );
+    }
     if (res.status === 429) {
       throw new Error("Pollinations rate limit hit. Wait a few seconds and retry.");
     }
@@ -84,8 +100,11 @@ const generate = async (opts: GenerateOpts): Promise<GenerateResult> => {
 export const pollinationsProvider: Provider = {
   id: "pollinations",
   name: "Pollinations.ai",
-  description: "Free FLUX / SDXL-Turbo. No account or API key required.",
+  description:
+    "SDXL Turbo works without a token. FLUX models need a free token from auth.pollinations.ai (added in Settings).",
   requiresKey: false,
+  keyDocsUrl: "https://auth.pollinations.ai/",
+  keyDocsLabel: "auth.pollinations.ai",
   models: MODELS,
   generate,
 };

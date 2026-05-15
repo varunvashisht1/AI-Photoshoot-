@@ -9,7 +9,7 @@ export const PROVIDERS_BY_ID: Record<string, Provider> = Object.fromEntries(
 );
 
 export const DEFAULT_PROVIDER_ID = "pollinations";
-export const DEFAULT_MODEL_ID = "flux";
+export const DEFAULT_MODEL_ID = "turbo";
 
 export const generateImage = async (opts: GenerateOpts & { providerId: string }): Promise<GenerateResult> => {
   const provider = PROVIDERS_BY_ID[opts.providerId];
