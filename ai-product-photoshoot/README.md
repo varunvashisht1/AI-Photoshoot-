@@ -106,9 +106,20 @@ npm run build
 npm run preview
 ```
 
-Production bundle is ~235 KB (~75 KB gzipped). The hosted site needs no
+Production bundle is ~245 KB (~77 KB gzipped). The hosted site needs no
 backend — drop `dist/` onto any static host (Vercel, Netlify, Cloudflare
 Pages, GitHub Pages).
+
+## Live site (GitHub Pages)
+
+Every push to `main` auto-deploys via `.github/workflows/deploy.yml` and
+is served at:
+
+> https://varunvashisht1.github.io/AI-Photoshoot-/
+
+To enable Pages once: in the repo on github.com, open **Settings → Pages**
+and set **Source** to **"GitHub Actions"**. The next push to `main` will
+publish the site.
 
 ## Tech stack
 
