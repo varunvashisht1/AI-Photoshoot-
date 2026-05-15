@@ -13,43 +13,53 @@ export const History: React.FC<HistoryProps> = ({ items, onSelect, onDelete, onC
   if (!items.length) return null;
 
   return (
-    <div className="bg-gray-800/50 rounded-lg p-5 shadow-2xl">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold text-gray-300 flex items-center gap-2">
-          <HistoryIcon className="w-5 h-5 text-cyan-400" />
+    <div className="surface-elevated p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+          <HistoryIcon className="h-4 w-4 text-cyan-300" />
           Recent
-          <span className="text-xs text-gray-500 font-normal">({items.length})</span>
+          <span className="font-mono text-[11px] font-normal text-slate-500">
+            {items.length}
+          </span>
         </h2>
         <button
           onClick={onClear}
-          className="text-xs text-gray-400 hover:text-red-400 transition-colors"
+          className="text-xs text-slate-400 transition-colors hover:text-rose-400"
         >
           Clear all
         </button>
       </div>
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
         {items.map((it) => (
-          <div key={it.id} className="relative group rounded-md overflow-hidden bg-gray-900">
+          <div
+            key={it.id}
+            className="group relative overflow-hidden rounded-lg border border-white/5 bg-slate-950 transition-all hover:border-white/20"
+          >
             <button
               onClick={() => onSelect(it)}
-              className="block w-full aspect-square"
+              className="block aspect-square w-full"
               title={it.prompt}
             >
               <img
                 src={it.thumbnail}
                 alt=""
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 to-transparent p-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                <p className="line-clamp-2 text-left text-[10px] leading-tight text-slate-200">
+                  {it.prompt}
+                </p>
+              </div>
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(it.id);
               }}
-              className="absolute top-1 right-1 bg-black/70 hover:bg-red-600 text-white rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute right-1 top-1 rounded bg-slate-950/80 p-1 text-white opacity-0 transition-opacity hover:bg-rose-600 group-hover:opacity-100"
               aria-label="Delete"
             >
-              <TrashIcon className="w-3.5 h-3.5" />
+              <TrashIcon className="h-3 w-3" />
             </button>
           </div>
         ))}

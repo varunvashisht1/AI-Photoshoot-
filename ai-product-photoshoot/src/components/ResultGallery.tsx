@@ -29,12 +29,17 @@ export const ResultGallery: React.FC<ResultGalleryProps> = ({
 
   if (imageUrls.length === 0) {
     return (
-      <div className="text-center text-gray-500 flex flex-col items-center py-12">
-        <ImageIcon className="w-16 h-16 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-400">
+      <div className="flex flex-col items-center py-12 text-center">
+        <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl border border-white/10 bg-white/5">
+          <ImageIcon className="h-8 w-8 text-slate-400" />
+        </div>
+        <h3 className="text-base font-semibold text-slate-200">
           Your generated images will appear here
         </h3>
-        <p className="text-sm">Upload a product, pick a scene, and click Generate.</p>
+        <p className="mt-1 max-w-xs text-sm text-slate-500">
+          Pick a model, choose a scene, write a prompt, then hit{" "}
+          <span className="font-semibold text-slate-300">Generate</span>.
+        </p>
       </div>
     );
   }
@@ -42,22 +47,20 @@ export const ResultGallery: React.FC<ResultGalleryProps> = ({
   const current = imageUrls[Math.min(selected, imageUrls.length - 1)];
 
   return (
-    <div className="w-full flex flex-col items-center gap-4">
-      <div className="flex items-center justify-between w-full">
-        <h2 className="text-lg font-semibold text-gray-300">
-          Result{imageUrls.length > 1 ? `s (${imageUrls.length})` : ""}
+    <div className="flex w-full flex-col items-center gap-4 animate-slide-up">
+      <div className="flex w-full items-center justify-between">
+        <h2 className="text-base font-semibold text-slate-100">
+          Result{imageUrls.length > 1 ? `s · ${imageUrls.length}` : ""}
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {originalUrl && (
             <button
               onClick={() => setCompare((c) => !c)}
-              className={`text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-medium transition-colors ${
-                compare
-                  ? "bg-cyan-600 text-white"
-                  : "bg-gray-700/60 text-gray-300 hover:bg-gray-700"
+              className={`btn-ghost px-2.5 py-1.5 text-xs ${
+                compare ? "border-cyan-400 bg-cyan-500/10 text-cyan-200" : ""
               }`}
             >
-              <CompareIcon className="w-4 h-4" />
+              <CompareIcon className="h-4 w-4" />
               Compare
             </button>
           )}
@@ -65,42 +68,42 @@ export const ResultGallery: React.FC<ResultGalleryProps> = ({
             <button
               onClick={onRegenerate}
               disabled={busy}
-              className="text-xs flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-medium bg-gray-700/60 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
+              className="btn-ghost px-2.5 py-1.5 text-xs"
             >
-              <RefreshIcon className="w-4 h-4" />
+              <RefreshIcon className="h-4 w-4" />
               Regenerate
             </button>
           )}
         </div>
       </div>
 
-      <div className="w-full max-w-md">
+      <div className="w-full">
         {compare && originalUrl ? (
           <CompareSlider beforeUrl={originalUrl} afterUrl={current} />
         ) : (
-          <div className="relative w-full aspect-square bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+          <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-white/10 bg-slate-950 shadow-soft">
             <img
               src={current}
               alt="Generated product scene"
-              className="w-full h-full object-contain"
+              className="h-full w-full object-contain"
             />
           </div>
         )}
       </div>
 
       {imageUrls.length > 1 && (
-        <div className="flex gap-2 flex-wrap justify-center">
+        <div className="flex flex-wrap justify-center gap-2">
           {imageUrls.map((url, i) => (
             <button
               key={i}
               onClick={() => setSelected(i)}
-              className={`w-16 h-16 rounded-md overflow-hidden border-2 transition-all ${
+              className={`h-16 w-16 overflow-hidden rounded-lg border-2 transition-all ${
                 i === selected
-                  ? "border-cyan-400 ring-2 ring-cyan-500/40"
-                  : "border-gray-700 hover:border-gray-500"
+                  ? "border-cyan-400 ring-2 ring-cyan-400/40"
+                  : "border-white/10 hover:border-white/30"
               }`}
             >
-              <img src={url} alt={`Variation ${i + 1}`} className="w-full h-full object-cover" />
+              <img src={url} alt={`Variation ${i + 1}`} className="h-full w-full object-cover" />
             </button>
           ))}
         </div>
@@ -108,10 +111,10 @@ export const ResultGallery: React.FC<ResultGalleryProps> = ({
 
       <button
         onClick={() => download(current, selected)}
-        className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-green-500/30"
+        className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-500 px-6 py-2.5 text-sm font-bold text-slate-950 shadow-soft transition-all hover:bg-emerald-400 hover:shadow-glow"
       >
-        <DownloadIcon className="w-5 h-5" />
-        Download
+        <DownloadIcon className="h-4 w-4" />
+        Download PNG
       </button>
     </div>
   );

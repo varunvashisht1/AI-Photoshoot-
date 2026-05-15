@@ -16,21 +16,25 @@ export const ScenePresets: React.FC<ScenePresetsProps> = ({ onPick, activeId }) 
   const items = SCENE_PRESETS.filter((p) => p.category === tab);
 
   return (
-    <div className="bg-gray-800/50 rounded-lg p-5 shadow-2xl">
-      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <h2 className="text-lg font-semibold text-gray-300">Scene Presets</h2>
-        <span className="text-xs text-gray-500">Click a card — you can fine-tune below</span>
+    <div className="surface-elevated p-5">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div>
+          <h2 className="text-base font-semibold text-slate-100">Scene presets</h2>
+          <p className="text-[11px] text-slate-500">
+            One click — fine-tune the wording below.
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-1.5 mb-4 border-b border-gray-700/60 pb-3">
+      <div className="mb-4 flex flex-wrap gap-1.5 border-b border-white/5 pb-3">
         {PRESET_CATEGORIES.map((cat) => (
           <button
             key={cat}
             onClick={() => setTab(cat)}
-            className={`text-xs px-3 py-1.5 rounded-full transition-colors font-medium ${
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
               tab === cat
-                ? "bg-cyan-600 text-white"
-                : "bg-gray-700/60 text-gray-300 hover:bg-gray-700"
+                ? "bg-gradient-to-r from-cyan-500 to-indigo-500 text-white shadow-glow"
+                : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
             }`}
           >
             {cat}
@@ -38,26 +42,29 @@ export const ScenePresets: React.FC<ScenePresetsProps> = ({ onPick, activeId }) 
         ))}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
-        {items.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => onPick(p)}
-            className={`group text-left rounded-lg overflow-hidden border transition-all ${
-              activeId === p.id
-                ? "border-cyan-400 ring-2 ring-cyan-500/40"
-                : "border-gray-700 hover:border-gray-500"
-            }`}
-            title={p.prompt}
-          >
-            <div
-              className={`h-16 bg-gradient-to-br ${p.swatch} group-hover:brightness-110 transition-all`}
-            />
-            <div className="px-2 py-1.5 bg-gray-900/70">
-              <p className="text-xs font-medium text-gray-200 truncate">{p.name}</p>
-            </div>
-          </button>
-        ))}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4">
+        {items.map((p) => {
+          const active = activeId === p.id;
+          return (
+            <button
+              key={p.id}
+              onClick={() => onPick(p)}
+              className={`group overflow-hidden rounded-xl border text-left transition-all ${
+                active
+                  ? "border-cyan-400 ring-2 ring-cyan-400/40 shadow-glow"
+                  : "border-white/10 hover:border-white/25 hover:translate-y-[-1px]"
+              }`}
+              title={p.prompt}
+            >
+              <div
+                className={`h-16 bg-gradient-to-br ${p.swatch} transition-all group-hover:brightness-110`}
+              />
+              <div className="bg-slate-950/70 px-2 py-1.5">
+                <p className="truncate text-xs font-semibold text-slate-100">{p.name}</p>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

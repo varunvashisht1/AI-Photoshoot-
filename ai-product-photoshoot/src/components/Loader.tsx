@@ -1,42 +1,39 @@
+import React, { useEffect, useState } from "react";
+import { SparklesIcon } from "./icons";
 
-import React, { useState, useEffect } from 'react';
-import { SparklesIcon } from './icons';
-
-const messages = [
-    "Warming up the AI's creative engine...",
-    "Mixing digital paints and pixels...",
-    "Finding the perfect lighting...",
-    "Setting up the virtual studio...",
-    "The AI is working its magic...",
-    "Almost there, adding the finishing touches..."
+const MESSAGES = [
+  "Warming up the model…",
+  "Mixing pixels and light…",
+  "Finding the perfect angle…",
+  "Setting the studio scene…",
+  "Adding the finishing touches…",
 ];
 
 export const Loader: React.FC = () => {
-    const [message, setMessage] = useState(messages[0]);
+  const [idx, setIdx] = useState(0);
 
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            setMessage(prevMessage => {
-                const currentIndex = messages.indexOf(prevMessage);
-                const nextIndex = (currentIndex + 1) % messages.length;
-                return messages[nextIndex];
-            });
-        }, 2500);
+  useEffect(() => {
+    const id = setInterval(() => setIdx((i) => (i + 1) % MESSAGES.length), 2500);
+    return () => clearInterval(id);
+  }, []);
 
-        return () => clearInterval(intervalId);
-    }, []);
-
-    return (
-        <div className="flex flex-col items-center justify-center text-center p-4">
-            <div className="relative w-16 h-16">
-                <div className="absolute inset-0 border-4 border-cyan-500/20 rounded-full"></div>
-                <div className="absolute inset-0 border-t-4 border-cyan-500 rounded-full animate-spin"></div>
-                <div className="absolute inset-2 flex items-center justify-center">
-                   <SparklesIcon className="w-8 h-8 text-cyan-400 animate-pulse"/>
-                </div>
-            </div>
-            <p className="mt-4 text-lg font-semibold text-gray-300">Generating Your Scene</p>
-            <p className="mt-1 text-sm text-gray-400 transition-opacity duration-500">{message}</p>
+  return (
+    <div className="flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+      <div className="relative h-20 w-20">
+        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-500/20 via-purple-500/20 to-pink-500/20 blur-xl animate-pulse-soft" />
+        <div className="absolute inset-2 rounded-full border-2 border-white/10" />
+        <div className="absolute inset-2 rounded-full border-2 border-t-cyan-400 border-r-purple-400 animate-spin" />
+        <div className="absolute inset-0 grid place-items-center">
+          <SparklesIcon className="h-7 w-7 text-cyan-300" />
         </div>
-    );
+      </div>
+      <p className="mt-5 text-base font-semibold text-slate-100">Generating your scene</p>
+      <p className="mt-1 max-w-xs text-sm text-slate-400 transition-opacity">
+        {MESSAGES[idx]}
+      </p>
+      <div className="mt-4 h-1 w-48 overflow-hidden rounded-full bg-white/5">
+        <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 animate-shimmer bg-[length:200%_100%]" />
+      </div>
+    </div>
+  );
 };

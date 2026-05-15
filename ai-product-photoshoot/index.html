@@ -2,17 +2,162 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>AI Product Photoshoot Studio</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
-    <!-- Mobile-specific meta tags for a more native feel -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0b1220">
+    <!-- Primary SEO -->
+    <title>AI Product Photoshoot — Free Studio-Quality Product Photos in Seconds</title>
+    <meta
+      name="description"
+      content="Generate studio-quality product photos for free using open-source AI models (FLUX, SDXL, Stable Diffusion 3.5). No signup required. Pick a scene, choose an aspect ratio, download — works in your browser."
+    />
+    <meta
+      name="keywords"
+      content="AI product photography, free AI product photos, AI photoshoot generator, FLUX product images, SDXL, Stable Diffusion product photos, open source image generator, product mockup AI, AI background for product photos, ecommerce photo AI, Etsy product photos, Shopify product photos"
+    />
+    <meta name="author" content="AI Product Photoshoot" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0b1220" />
+    <link rel="canonical" href="https://varunvashisht1.github.io/AI-Photoshoot-/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://varunvashisht1.github.io/AI-Photoshoot-/" />
+    <meta
+      property="og:title"
+      content="AI Product Photoshoot — Free Studio-Quality Product Photos"
+    />
+    <meta
+      property="og:description"
+      content="Free, open-source AI product photography. Generate FLUX / SDXL / Stable Diffusion product shots in your browser. No signup."
+    />
+    <meta property="og:image" content="https://varunvashisht1.github.io/AI-Photoshoot-/og-image.svg" />
+    <meta property="og:image:type" content="image/svg+xml" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="AI Product Photoshoot" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="AI Product Photoshoot — Free Studio-Quality Product Photos"
+    />
+    <meta
+      name="twitter:description"
+      content="Free, open-source AI product photography. FLUX, SDXL, SD 3.5 — no signup required."
+    />
+    <meta name="twitter:image" content="https://varunvashisht1.github.io/AI-Photoshoot-/og-image.svg" />
+
+    <!-- Mobile / PWA hints -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="AI Photoshoot" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <!-- Preconnect to image providers for faster first generation -->
+    <link rel="preconnect" href="https://image.pollinations.ai" crossorigin />
+    <link rel="dns-prefetch" href="https://image.pollinations.ai" />
+    <link rel="dns-prefetch" href="https://api-inference.huggingface.co" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "AI Product Photoshoot",
+        "url": "https://varunvashisht1.github.io/AI-Photoshoot-/",
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "Web",
+        "browserRequirements": "Requires a modern browser with JavaScript enabled",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Free open-source image generation (FLUX, SDXL, Stable Diffusion 3.5)",
+          "No signup or API key required (Pollinations.ai)",
+          "Optional Hugging Face token for additional models",
+          "24 scene presets across Studio, Lifestyle, Nature, Luxury, Seasonal, Tech",
+          "Aspect ratio control for social platforms",
+          "Generate up to 4 variations in parallel",
+          "Before / after compare slider",
+          "Local history of past generations",
+          "Negative prompt and lighting / mood controls",
+          "Client-side image processing — your data never leaves your browser"
+        ],
+        "description": "Free in-browser AI product photo generator using open-source models including FLUX, SDXL and Stable Diffusion 3.5. No signup required."
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Is AI Product Photoshoot really free?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. The default provider (Pollinations.ai) requires no account or API key and is completely free. The optional Hugging Face provider is also free — it only asks for a free read token from your Hugging Face account."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which AI models can I use?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "FLUX.1, FLUX Realism, FLUX 3D, FLUX Anime, SDXL Turbo via Pollinations, plus FLUX.1 Schnell, FLUX.1 Dev, SDXL 1.0, Stable Diffusion 3.5 Large Turbo, and Playground v2.5 via Hugging Face."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do I need to install anything?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. AI Product Photoshoot runs entirely in your browser. There is no software to install and no backend server stores your data."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Will it preserve my exact product?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "These are text-to-image open-source models, so they generate a fresh scene from your prompt. Your uploaded product photo is a visual reference and powers the before/after compare slider, but is not pixel-locked into the output the way paid image-editing models would be."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Where is my data stored?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Everything stays in your browser. API tokens, generated images, and history are kept in localStorage. Nothing is sent to a server we control."
+            }
+          }
+        ]
+      }
+    </script>
   </head>
-  <body class="bg-gray-900 text-white">
+  <body class="bg-gray-950 text-white antialiased">
+    <a
+      href="#app"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-cyan-500 focus:text-gray-950 focus:px-3 focus:py-1 focus:rounded"
+      >Skip to app</a
+    >
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
   </body>
