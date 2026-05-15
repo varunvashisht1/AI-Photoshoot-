@@ -10,10 +10,17 @@ const FAQS: QA[] = [
     q: "Is AI Product Photoshoot really free?",
     a: (
       <>
-        Yes. The default provider <strong>Pollinations.ai</strong> requires no
-        account or API key and is completely free. The optional Hugging Face
-        provider is also free — it asks only for a free read token from your
-        Hugging Face account.
+        Yes. <strong>SDXL Turbo via Pollinations.ai</strong> works without any
+        account or key. FLUX models on Pollinations need a free token from{" "}
+        <a
+          href="https://auth.pollinations.ai/"
+          target="_blank"
+          rel="noreferrer"
+          className="text-brand-300 underline hover:text-brand-200"
+        >
+          auth.pollinations.ai
+        </a>
+        . The Hugging Face provider is also free with a free read token.
       </>
     ),
   },

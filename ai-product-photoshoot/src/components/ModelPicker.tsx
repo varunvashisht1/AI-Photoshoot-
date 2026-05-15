@@ -120,11 +120,20 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
                 <p className="mb-1.5 line-clamp-2 text-xs text-slate-400">{m.description}</p>
               )}
               <div className="flex flex-wrap gap-1">
-                {m.badges?.map((b) => (
-                  <Badge key={b} tone={b === "Free" ? "ok" : "default"}>
-                    {b}
-                  </Badge>
-                ))}
+                {m.badges?.map((b) => {
+                  const isTokenBadge = b === "Token";
+                  const tone: "ok" | "warn" | "default" =
+                    b === "Free" || b === "No token"
+                      ? "ok"
+                      : isTokenBadge && !providerKey
+                        ? "warn"
+                        : "default";
+                  return (
+                    <Badge key={b} tone={tone}>
+                      {b}
+                    </Badge>
+                  );
+                })}
               </div>
             </button>
           );

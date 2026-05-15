@@ -50,14 +50,16 @@ quality with **zero unit cost**.
 
 ## Providers & models
 
-### Pollinations.ai — zero config, no API key
-- **FLUX.1** — open-source FLUX, best general quality
-- **FLUX Realism** — FLUX tuned for photorealism
-- **FLUX 3D** — 3D-rendered aesthetic
-- **FLUX Anime** — anime / illustration
-- **SDXL Turbo** — fast Stable Diffusion XL Turbo
+### Pollinations.ai
+- **SDXL Turbo** — works anonymously, no token needed (default model)
+- **FLUX.1** — best general quality (free token required)
+- **FLUX Realism** — FLUX tuned for photorealism (token)
+- **FLUX 3D** — 3D-rendered aesthetic (token)
+- **FLUX Anime** — anime / illustration (token)
 
-The default provider — works the moment you open the app.
+SDXL Turbo works the moment you open the app. To unlock the FLUX family,
+grab a free token at [auth.pollinations.ai](https://auth.pollinations.ai/)
+and paste it into **Settings**.
 
 ### Hugging Face Inference API — free with HF token
 - **FLUX.1 Schnell** (`black-forest-labs/FLUX.1-schnell`)
